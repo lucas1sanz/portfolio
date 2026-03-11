@@ -1,14 +1,14 @@
 'use client'
 import { useSpring, animated } from '@react-spring/web'
 import { useDrag } from '@use-gesture/react'
-import { useRef, useState } from 'react'
+import { useRef, useEffect, useState } from 'react'
 
 interface Props {
   skill: string
   index: number
+  category: string
   zeroG: boolean
-  originX: number
-  originY: number
+  resetKey: number
 }
 
 const categoryColors: Record<string, string> = {
@@ -19,10 +19,12 @@ const categoryColors: Record<string, string> = {
   Tools: 'bg-pink-100 text-pink-800 border-pink-200 hover:bg-pink-200',
 }
 
-export default function SkillIcon({ skill, zeroG, index }: Props) {
+export default function SkillIcon({ skill, index, category, zeroG, resetKey }: Props) {
   const [isDragging, setIsDragging] = useState(false)
-  const category = Object.keys(categoryColors)[Math.floor(index / 6)] || 'Frontend'
-  const colorClass = categoryColors[category] || categoryColors.Frontend
+  const colorClass = categoryColors[category] ?? categoryColors.Frontend
+
+  // Accumulated offset so position is saved after dragging
+  const offset = useRef({ x: 0, y: 0 })
 
   const [{ x, y }, api] = useSpring(() => ({
     x: 0,
@@ -30,18 +32,21 @@ export default function SkillIcon({ skill, zeroG, index }: Props) {
     config: { tension: 200, friction: 20 },
   }))
 
-  // Zero-G floating animation
-  const floatOffset = useRef({ x: Math.random() * 20 - 10, y: Math.random() * 20 - 10 })
+  // Reset when resetKey changes
+  useEffect(() => {
+    offset.current = { x: 0, y: 0 }
+    api.start({ x: 0, y: 0, config: { tension: 200, friction: 20 } })
+  }, [resetKey, api])
+
+  // Zero-G floating
+  const floatSeed = useRef({ x: Math.random() * 20 - 10, y: Math.random() * 20 - 10 })
   const animFrameRef = useRef<number | null>(null)
   const startTimeRef = useRef<number | null>(null)
-
-  // Use a ref to track zeroG state for the animation loop
   const zeroGRef = useRef(zeroG)
   zeroGRef.current = zeroG
   const isDraggingRef = useRef(isDragging)
   isDraggingRef.current = isDragging
 
-  // Start/stop floating animation based on zeroG
   const startFloating = () => {
     if (animFrameRef.current) return
     startTimeRef.current = performance.now()
@@ -52,8 +57,8 @@ export default function SkillIcon({ skill, zeroG, index }: Props) {
       }
       const elapsed = (now - (startTimeRef.current ?? now)) / 1000
       api.set({
-        x: Math.sin(elapsed * 0.8 + index) * floatOffset.current.x,
-        y: Math.cos(elapsed * 0.6 + index * 0.7) * floatOffset.current.y,
+        x: offset.current.x + Math.sin(elapsed * 0.8 + index) * floatSeed.current.x,
+        y: offset.current.y + Math.cos(elapsed * 0.6 + index * 0.7) * floatSeed.current.y,
       })
       animFrameRef.current = requestAnimationFrame(animate)
     }
@@ -65,40 +70,35 @@ export default function SkillIcon({ skill, zeroG, index }: Props) {
   } else if (!zeroG && animFrameRef.current) {
     cancelAnimationFrame(animFrameRef.current)
     animFrameRef.current = null
-    api.start({ x: 0, y: 0 })
+    api.start({ x: offset.current.x, y: offset.current.y })
   }
 
-  const bind = useDrag(({ active, movement: [mx, my], velocity: [vx, vy] }) => {
+  const bind = useDrag(({ active, movement: [mx, my], velocity: [vx] }) => {
     setIsDragging(active)
     isDraggingRef.current = active
     if (active) {
-      api.set({ x: mx, y: my })
+      api.set({ x: offset.current.x + mx, y: offset.current.y + my })
     } else {
-      // Spring back with throw physics
+      // Save the new resting position
+      offset.current = { x: offset.current.x + mx, y: offset.current.y + my }
       api.start({
-        x: 0,
-        y: 0,
-        config: {
-          tension: 120 + Math.abs(vx) * 50,
-          friction: 14,
-          velocity: [vx * 5, vy * 5],
-        },
+        x: offset.current.x,
+        y: offset.current.y,
+        config: { tension: 120 + Math.abs(vx) * 40, friction: 14 },
       })
-      if (zeroGRef.current) {
-        setTimeout(startFloating, 500)
-      }
+      if (zeroGRef.current) setTimeout(startFloating, 400)
     }
   }, { filterTaps: true })
 
   return (
     <animated.div
       {...bind()}
-      style={{ x, y, touchAction: 'none' }}
+      style={{ x, y, touchAction: 'none', position: 'relative', zIndex: isDragging ? 50 : 1 }}
       className={`
         inline-flex items-center px-4 py-2 rounded-full border text-sm font-medium
         cursor-grab active:cursor-grabbing select-none transition-colors
         ${colorClass}
-        ${isDragging ? 'shadow-xl scale-110 z-50' : 'shadow-sm'}
+        ${isDragging ? 'shadow-xl scale-110' : 'shadow-sm'}
       `}
     >
       {skill}

@@ -60,7 +60,6 @@ export default function SudoUnlock() {
             <p className="text-green-300 text-xl mb-3">[sudo] Access granted. Revealing classified data...</p>
             <div className="space-y-1 text-green-400 text-lg">
               <p>📧 Email: <span className="text-green-300">{resume.contact.email}</span></p>
-              <p>📞 Phone: <span className="text-green-300">{resume.contact.phone}</span></p>
               <p>💼 LinkedIn: <span className="text-green-300">{resume.contact.linkedin}</span></p>
               <p>🐙 GitHub: <span className="text-green-300">{resume.contact.github}</span></p>
             </div>

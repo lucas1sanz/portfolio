@@ -4,9 +4,8 @@ export const resume = {
   tagline: "I write clean code. Occasionally I also write comments, but those are just *dirty* jokes.",
   summary: "6+ years of experience building scalable web applications. That's like 42 in dog years, or 3 in JavaScript framework years.",
   contact: {
-    email: "lucas.sanz@example.com",
-    phone: "+1 (555) 123-4567",
-    linkedin: "linkedin.com/in/lucassanz",
+    email: "lucas1sanz96@gmail.com",
+    linkedin: "linkedin.com/in/lucas-sanz-allona",
     github: "github.com/lucas1sanz",
   },
   experience: [

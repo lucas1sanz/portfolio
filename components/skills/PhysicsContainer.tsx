@@ -10,6 +10,7 @@ const allSkills: { category: string; skills: string[] }[] = Object.entries(resum
 
 export default function PhysicsContainer() {
   const [zeroG, setZeroG] = useState(false)
+  const resetKey = 0
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 pt-20 pb-10">
@@ -54,9 +55,9 @@ export default function PhysicsContainer() {
                   key={skill}
                   skill={skill}
                   index={catIndex * 6 + i}
+                  category={category}
                   zeroG={zeroG}
-                  originX={0}
-                  originY={0}
+                  resetKey={resetKey}
                 />
               ))}
             </div>
